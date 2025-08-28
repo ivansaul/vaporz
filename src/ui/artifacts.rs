@@ -212,6 +212,7 @@ impl StatefulWidget for ArtifacsWidget {
                 Span::raw("ath"),
             ])
             .alignment(Alignment::Left),
+            Line::from(vec![Span::raw("status")]).alignment(Alignment::Right),
             Line::from(vec![
                 Span::styled("m", Style::default().fg(Color::Red)),
                 Span::raw("odified"),
@@ -228,24 +229,22 @@ impl StatefulWidget for ArtifacsWidget {
         let table_rows = if let Ok(rows) = state.rows.read() {
             rows.iter()
                 .map(|folder| {
-                    let line_path = Line::from(vec![
-                        Span::styled(
-                            match folder.removal_status {
-                                ProcessStatus::Pending => "",
-                                ProcessStatus::Completed => "[Deleted] ",
-                                ProcessStatus::Failed => "[Failed] ",
-                                ProcessStatus::InProgress => "[Deleting ...] ",
-                            },
-                            Style::default()
-                                .fg(match folder.removal_status {
-                                    ProcessStatus::Failed => Color::Red,
-                                    _ => Color::Green,
-                                })
-                                .italic()
-                                .bold(),
-                        ),
-                        Span::raw(folder.path_string()),
-                    ]);
+                    let line_path = Line::from(vec![Span::raw(folder.path_string())]);
+                    let line_status = Line::from(vec![Span::styled(
+                        match folder.removal_status {
+                            ProcessStatus::Pending => "",
+                            ProcessStatus::Completed => "Deleted",
+                            ProcessStatus::Failed => "Failed",
+                            ProcessStatus::InProgress => "Deleting",
+                        },
+                        Style::default()
+                            .fg(match folder.removal_status {
+                                ProcessStatus::Failed => Color::Red,
+                                _ => Color::Green,
+                            })
+                            .bold(),
+                    )])
+                    .alignment(Alignment::Right);
                     let line_size = match folder.human_size() {
                         Some(size) => Line::from(size)
                             .alignment(Alignment::Right)
@@ -260,6 +259,7 @@ impl StatefulWidget for ArtifacsWidget {
                     };
                     Row::new(vec![
                         Cell::from(line_path),
+                        Cell::from(line_status),
                         Cell::from(line_mod),
                         Cell::from(line_size),
                     ])
@@ -271,6 +271,7 @@ impl StatefulWidget for ArtifacsWidget {
 
         let table_widths = [
             Constraint::Min(0),
+            Constraint::Length(10),
             Constraint::Length(10),
             Constraint::Length(10),
         ];
