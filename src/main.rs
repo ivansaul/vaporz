@@ -3,6 +3,7 @@ use vaporz::{logging, tui::Tui, ui::app::App};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    color_eyre::install()?;
     logging::init()?;
     let tui = Tui::new()?
         .tick_rate(1.0) // 4 ticks per second

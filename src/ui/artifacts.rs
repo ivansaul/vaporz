@@ -1,8 +1,12 @@
+use crate::errors::Result;
+use crate::ui::loading::LoadingLine;
+use crate::utils;
 use crate::{
     actions::AppAction,
-    models::{FolderInfo, Removed},
+    models::{FolderInfo, ProcessStatus},
     utils::scanner::scan_current_dir,
 };
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Rect},
@@ -10,11 +14,12 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, BorderType, Cell, Row, StatefulWidget, Table, TableState},
 };
-use std::{thread::sleep, time::Duration};
+use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc::{self, UnboundedSender};
+use uuid::Uuid;
 
 pub struct Artifacts {
-    pub rows: Vec<FolderInfo>,
+    pub rows: Arc<RwLock<Vec<FolderInfo>>>,
     pub table_state: TableState,
     pub action_tx: UnboundedSender<AppAction>,
     path_order_descending: bool,
@@ -25,7 +30,7 @@ pub struct Artifacts {
 impl Artifacts {
     pub fn new(action_tx: UnboundedSender<AppAction>) -> Self {
         Self {
-            rows: Vec::new(),
+            rows: Arc::new(RwLock::new(Vec::new())),
             table_state: TableState::new(),
             action_tx: action_tx,
             path_order_descending: Default::default(),
@@ -36,90 +41,135 @@ impl Artifacts {
 }
 
 impl Artifacts {
-    pub fn perform(&mut self, action: AppAction) -> Option<AppAction> {
-        match action {
-            AppAction::KeyUp => {
-                self.table_state.select_previous();
-                Some(AppAction::Render)
-            }
-            AppAction::KeyDown => {
-                self.table_state.select_next();
-                Some(AppAction::Render)
-            }
-            AppAction::ArtifactNewRow(row) => {
-                self.rows.push(row);
-                Some(AppAction::Render)
-            }
-            AppAction::ArtifactUpdateRowRemoveStatus { id, removed } => {
-                if let Some(row) = self.rows.iter_mut().find(|row| row.id == id) {
-                    row.removed = removed;
-                }
-                Some(AppAction::Render)
-            }
-            AppAction::KeyEnter => {
-                self.remove_path();
-                Some(AppAction::Render)
-            }
-            AppAction::KeyCharLowerP => {
-                self.sort_by_path();
-                Some(AppAction::Render)
-            }
-            AppAction::KeyCharLowerM => {
-                self.sort_by_last_modified();
-                Some(AppAction::Render)
-            }
-            AppAction::KeyCharLowerS => {
-                self.sort_by_size();
-                Some(AppAction::Render)
-            }
+    pub fn handle_key_event(&mut self, kev: KeyEvent) -> Option<AppAction> {
+        match kev.code {
+            KeyCode::Up => Some(AppAction::ArtifactsSelectPreviousRow),
+            KeyCode::Down => Some(AppAction::ArtifactsSelectNextRow),
+            KeyCode::Enter => Some(AppAction::ArtifactsRemoveRow),
+            KeyCode::Char('m') => Some(AppAction::ArtifactsSortByLastMod),
+            KeyCode::Char('p') => Some(AppAction::ArtifactsSortByPath),
+            KeyCode::Char('s') => Some(AppAction::ArtifactsSortBySize),
             _ => None,
         }
     }
 
-    fn remove_path(&mut self) {
-        if let Some(index) = self.table_state.selected() {
-            let tx = self.action_tx.clone();
-            let id = self.rows[index].id;
-            tokio::task::spawn_blocking(move || {
-                let _ = tx.send(AppAction::ArtifactUpdateRowRemoveStatus {
-                    id: id,
-                    removed: Removed::Progress,
-                });
-                sleep(Duration::from_secs(2));
-                let _ = tx.send(AppAction::ArtifactUpdateRowRemoveStatus {
-                    id: id,
-                    removed: Removed::True,
-                });
-            });
-        }
+    pub fn perform(&mut self, action: AppAction) -> Result<Option<AppAction>> {
+        match action {
+            AppAction::ArtifactsSelectPreviousRow => {
+                self.table_state.select_previous();
+            }
+            AppAction::ArtifactsSelectNextRow => {
+                self.table_state.select_next();
+            }
+            AppAction::ArtifactsInsertRow(row) => {
+                self.insert_row(row);
+            }
+            AppAction::ArtifactsRemoveRow => {
+                self.remove_path()?;
+            }
+            AppAction::ArtifactsSortByPath => {
+                self.sort_by_path();
+            }
+            AppAction::ArtifactsSortByLastMod => {
+                self.sort_by_last_modified();
+            }
+            AppAction::ArtifactsSortBySize => {
+                self.sort_by_size();
+            }
+            _ => {}
+        };
+        Ok(Some(AppAction::Render))
     }
+}
 
+impl Artifacts {
     fn sort_by_path(&mut self) {
         self.path_order_descending = !self.path_order_descending;
-        if self.path_order_descending {
-            self.rows
-                .sort_by_key(|row| std::cmp::Reverse(row.path_string()));
-        } else {
-            self.rows.sort_by_key(|row| row.path_string());
+        if let Ok(mut rows) = self.rows.write() {
+            if self.path_order_descending {
+                rows.sort_by_key(|row| std::cmp::Reverse(row.path_string()));
+            } else {
+                rows.sort_by_key(|row| row.path_string());
+            }
         }
     }
 
     fn sort_by_last_modified(&mut self) {
         self.last_modified_order_descending = !self.last_modified_order_descending;
-        if self.last_modified_order_descending {
-            self.rows
-                .sort_by_key(|row| std::cmp::Reverse(row.last_modified()));
-        } else {
-            self.rows.sort_by_key(|row| row.last_modified());
+        if let Ok(mut rows) = self.rows.write() {
+            if self.last_modified_order_descending {
+                rows.sort_by_key(|row| std::cmp::Reverse(row.last_modified()));
+            } else {
+                rows.sort_by_key(|row| row.last_modified());
+            }
         }
     }
 
     fn sort_by_size(&mut self) {
         self.size_order_descending = !self.size_order_descending;
-        if self.size_order_descending {
-            self.rows.sort_by_key(|row| std::cmp::Reverse(row.size()));
-        } else {
-            self.rows.sort_by_key(|row| row.size());
+        if let Ok(mut rows) = self.rows.write() {
+            if self.size_order_descending {
+                rows.sort_by_key(|row| std::cmp::Reverse(row.size()));
+            } else {
+                rows.sort_by_key(|row| row.size());
+            }
+        }
+    }
+
+    fn insert_row(&mut self, row: FolderInfo) {
+        if let Ok(mut rows) = self.rows.write() {
+            rows.push(row);
+        }
+    }
+
+    fn remove_path(&mut self) -> Result<()> {
+        if let Some(index) = self.table_state.selected() {
+            let tx = self.action_tx.clone();
+            let rows = Arc::clone(&self.rows);
+
+            let (id, path, status) = {
+                let data = rows.read()?;
+                let row = &data[index];
+                (row.id, row.path.clone(), row.removal_status)
+            };
+
+            if status != ProcessStatus::Pending {
+                return Ok(());
+            }
+
+            {
+                let mut data = rows.write()?;
+                if let Some(row) = data.iter_mut().find(|r| r.id == id) {
+                    row.removal_status = ProcessStatus::InProgress;
+                    let _ = tx.send(AppAction::Render);
+                }
+            }
+
+            tokio::task::spawn_blocking(move || match utils::fs::remove_path(&path) {
+                Ok(_) => {
+                    Self::update_removal_status(&rows, id, ProcessStatus::Completed);
+                    let _ = tx.send(AppAction::Render);
+                }
+                Err(err) => {
+                    Self::update_removal_status(&rows, id, ProcessStatus::Failed);
+                    let _ = tx.send(AppAction::Error(format!("Failed to remove path: {err}")));
+                    let _ = tx.send(AppAction::Render);
+                }
+            });
+        }
+
+        Ok(())
+    }
+
+    fn update_removal_status(
+        rows: &Arc<RwLock<Vec<FolderInfo>>>,
+        id: Uuid,
+        new_status: ProcessStatus,
+    ) {
+        if let Ok(mut data) = rows.write() {
+            if let Some(row) = data.iter_mut().find(|r| r.id == id) {
+                row.removal_status = new_status;
+            }
         }
     }
 
@@ -131,7 +181,7 @@ impl Artifacts {
                 scan_current_dir(tx_info);
             });
             while let Some(row) = rx_info.recv().await {
-                let _ = tx_action_clone.send(AppAction::ArtifactNewRow(row));
+                let _ = tx_action_clone.send(AppAction::ArtifactsInsertRow(row));
             }
         });
     }
@@ -175,30 +225,49 @@ impl StatefulWidget for ArtifacsWidget {
         ])
         .style(Style::default().bold());
 
-        let table_rows = state.rows.iter().map(|folder| {
-            let line_path = match folder.removed {
-                Removed::False => format!("{}", folder.path_string()),
-                Removed::True => format!("Deleted {}", folder.path_string()),
-                Removed::Progress => format!("Deleting ... {}", folder.path_string()),
-            };
-            let line_size = match folder.human_size() {
-                Some(size) => Line::from(size)
-                    .alignment(Alignment::Right)
-                    .fg(Color::LightGreen),
-                None => LoadingLine::default().alignment(Alignment::Right),
-            };
-            let line_mod = match folder.human_last_modified() {
-                Some(elapsed) => Line::from(elapsed)
-                    .alignment(Alignment::Right)
-                    .fg(Color::LightGreen),
-                None => LoadingLine::default().alignment(Alignment::Right),
-            };
-            Row::new(vec![
-                Cell::from(line_path),
-                Cell::from(line_mod),
-                Cell::from(line_size),
-            ])
-        });
+        let table_rows = if let Ok(rows) = state.rows.read() {
+            rows.iter()
+                .map(|folder| {
+                    let line_path = Line::from(vec![
+                        Span::styled(
+                            match folder.removal_status {
+                                ProcessStatus::Pending => "",
+                                ProcessStatus::Completed => "[Deleted] ",
+                                ProcessStatus::Failed => "[Failed] ",
+                                ProcessStatus::InProgress => "[Deleting ...] ",
+                            },
+                            Style::default()
+                                .fg(match folder.removal_status {
+                                    ProcessStatus::Failed => Color::Red,
+                                    _ => Color::Green,
+                                })
+                                .italic()
+                                .bold(),
+                        ),
+                        Span::raw(folder.path_string()),
+                    ]);
+                    let line_size = match folder.human_size() {
+                        Some(size) => Line::from(size)
+                            .alignment(Alignment::Right)
+                            .fg(Color::LightGreen),
+                        None => LoadingLine::default().alignment(Alignment::Right),
+                    };
+                    let line_mod = match folder.human_last_modified() {
+                        Some(elapsed) => Line::from(elapsed)
+                            .alignment(Alignment::Right)
+                            .fg(Color::LightGreen),
+                        None => LoadingLine::default().alignment(Alignment::Right),
+                    };
+                    Row::new(vec![
+                        Cell::from(line_path),
+                        Cell::from(line_mod),
+                        Cell::from(line_size),
+                    ])
+                })
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
 
         let table_widths = [
             Constraint::Min(0),
@@ -217,19 +286,5 @@ impl StatefulWidget for ArtifacsWidget {
             );
 
         StatefulWidget::render(table, area, buf, &mut state.table_state);
-    }
-}
-
-pub struct LoadingLine;
-
-impl LoadingLine {
-    pub fn default() -> Line<'static> {
-        Line::from(vec![
-            Span::styled("‧", Style::default().fg(Color::LightGreen)).bold(),
-            Span::styled("‧", Style::default().fg(Color::Green)).bold(),
-            Span::styled("‧", Style::default().fg(Color::Yellow)).bold(),
-            Span::styled("‧", Style::default().fg(Color::LightRed)).bold(),
-            Span::styled("‧", Style::default().fg(Color::Red)).bold(),
-        ])
     }
 }

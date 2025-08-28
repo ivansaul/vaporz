@@ -1,3 +1,4 @@
+use crate::errors::Result;
 use crate::{
     actions::AppAction,
     events::AppEvent,
@@ -7,7 +8,6 @@ use crate::{
         counter::{Counter, CounterWidget},
     },
 };
-use color_eyre::eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
@@ -65,26 +65,20 @@ impl App {
             KeyCode::Esc | KeyCode::Char('q') => Some(AppAction::Quit),
             KeyCode::Char('1') => Some(AppAction::SwitchMode(AppMode::Counter)),
             KeyCode::Char('2') => Some(AppAction::SwitchMode(AppMode::Artifacts)),
-            KeyCode::Up => Some(AppAction::KeyUp),
-            KeyCode::Down => Some(AppAction::KeyDown),
-            KeyCode::Enter => Some(AppAction::KeyEnter),
-            KeyCode::Char('m') => Some(AppAction::KeyCharLowerM),
-            KeyCode::Char('p') => Some(AppAction::KeyCharLowerP),
-            KeyCode::Char('s') => Some(AppAction::KeyCharLowerS),
-            _ => None,
+            _ => match self.mode {
+                AppMode::Counter => None,
+                AppMode::Artifacts => self.artifacts.handle_key_event(kev),
+            },
         }
     }
 
-    fn handle_action(&mut self, action: AppAction) -> Option<AppAction> {
+    fn handle_action(&mut self, action: AppAction) -> Result<Option<AppAction>> {
         match action {
-            AppAction::Quit => self.quit(),
-            AppAction::SwitchMode(mode) => self.switch_mode(mode),
-            AppAction::ArtifactNewRow(_)
-            | AppAction::ArtifactUpdateRowRemoveStatus { id: _, removed: _ } => {
-                self.artifacts.perform(action)
-            }
+            AppAction::Quit => Ok(self.quit()),
+            AppAction::SwitchMode(mode) => Ok(self.switch_mode(mode)),
+            AppAction::ArtifactsInsertRow(_) => self.artifacts.perform(action),
             _ => match self.mode {
-                AppMode::Counter => self.counter_1.perform(action),
+                AppMode::Counter => Ok(self.counter_1.perform(action)),
                 AppMode::Artifacts => self.artifacts.perform(action),
             },
         }
@@ -115,7 +109,7 @@ impl App {
                                 tui.draw(|f| self.render(f))?;
                                 None
                             }
-                            other => self.handle_action(other),
+                            other => self.handle_action(other)?,
                         };
                     }
                 }
@@ -128,7 +122,7 @@ impl App {
                                 tui.draw(|f| self.render(f))?;
                                 None
                             }
-                            other => self.handle_action(other),
+                            other => self.handle_action(other)?,
                         };
                     }
                 }

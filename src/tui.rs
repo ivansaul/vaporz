@@ -1,5 +1,5 @@
+use crate::errors::Result;
 use crate::events::AppEvent;
-use color_eyre::eyre::Result;
 use crossterm::{
     cursor,
     event::{

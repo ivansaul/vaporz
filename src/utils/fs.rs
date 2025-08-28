@@ -50,10 +50,12 @@ pub fn calculate_dir_size<P: AsRef<Path>>(dir: P) -> u64 {
 }
 
 pub fn remove_path(path: &Path) -> Result<()> {
-    if path.is_file() {
-        fs::remove_file(path)?;
-    } else if path.is_dir() {
-        fs::remove_dir_all(path)?;
-    }
+    // if path.is_file() {
+    //     fs::remove_file(path)?;
+    // } else if path.is_dir() {
+    //     fs::remove_dir_all(path)?;
+    // }
+    std::thread::sleep(std::time::Duration::from_secs(2));
+    log::info!("{}", path.display().to_string());
     Ok(())
 }

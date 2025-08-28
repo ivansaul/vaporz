@@ -1,11 +1,6 @@
-use uuid::Uuid;
+use crate::{models::FolderInfo, ui::app::AppMode};
 
-use crate::{
-    models::{FolderInfo, Removed},
-    ui::app::AppMode,
-};
-
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum AppAction {
     Render,
     Quit,
@@ -17,6 +12,12 @@ pub enum AppAction {
     KeyCharLowerP,
     KeyCharLowerS,
     SwitchMode(AppMode),
-    ArtifactNewRow(FolderInfo),
-    ArtifactUpdateRowRemoveStatus { id: Uuid, removed: Removed },
+    ArtifactsSortByPath,
+    ArtifactsSortBySize,
+    ArtifactsSortByLastMod,
+    ArtifactsRemoveRow,
+    ArtifactsInsertRow(FolderInfo),
+    ArtifactsSelectNextRow,
+    ArtifactsSelectPreviousRow,
+    Error(String),
 }
