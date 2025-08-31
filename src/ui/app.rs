@@ -1,5 +1,5 @@
 use crate::errors::Result;
-use crate::ui::metrics::Metrics;
+use crate::ui::metrics::MetricsWidget;
 use crate::{
     actions::AppAction,
     events::AppEvent,
@@ -163,7 +163,7 @@ impl StatefulWidget for AppWidget {
             .constraints(vec![Constraint::Min(4), Constraint::Percentage(100)])
             .areas(left_area);
 
-        Metrics {
+        MetricsWidget {
             releasable_space: state.artifacts.releasable_space().unwrap_or(0),
             saved_space: state.artifacts.saved_space().unwrap_or(0),
         }
