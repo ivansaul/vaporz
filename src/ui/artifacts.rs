@@ -187,6 +187,27 @@ impl Artifacts {
     }
 }
 
+impl Artifacts {
+    pub fn releasable_space(&self) -> Result<u64> {
+        let rows = self.rows.read()?;
+        let size = rows
+            .iter()
+            .filter_map(|row| row.size())
+            .fold(0, |acc, x| acc + x);
+        Ok(size)
+    }
+
+    pub fn saved_space(&self) -> Result<u64> {
+        let rows = self.rows.read()?;
+        let size = rows
+            .iter()
+            .filter(|row| row.removal_status == ProcessStatus::Completed)
+            .filter_map(|row| row.size())
+            .fold(0, |acc, x| acc + x);
+        Ok(size)
+    }
+}
+
 pub struct ArtifacsWidget {
     pub has_focus: bool,
 }

@@ -1,11 +1,12 @@
 use crate::errors::Result;
+use crate::ui::metrics::Metrics;
 use crate::{
     actions::AppAction,
     events::AppEvent,
     tui::Tui,
     ui::{
         artifacts::{ArtifacsWidget, Artifacts},
-        counter::{Counter, CounterWidget},
+        counter::Counter,
     },
 };
 use crossterm::event::{KeyCode, KeyEvent};
@@ -152,19 +153,25 @@ impl StatefulWidget for AppWidget {
         let background = Block::default().style(Style::default().bg(Color::Rgb(0, 0, 0)));
         background.render(area, buf);
 
-        let layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(10), Constraint::Percentage(90)])
-            .split(area);
+        let [left_area, artifacs_area] = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Min(30), Constraint::Percentage(100)])
+            .areas(area);
 
-        CounterWidget {
-            has_focus: state.mode == AppMode::Counter,
+        let [metrics_area, _] = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Min(4), Constraint::Percentage(100)])
+            .areas(left_area);
+
+        Metrics {
+            releasable_space: state.artifacts.releasable_space().unwrap_or(0),
+            saved_space: state.artifacts.saved_space().unwrap_or(0),
         }
-        .render(layout[0], buf, &mut state.counter_1);
+        .render(metrics_area, buf);
 
         ArtifacsWidget {
             has_focus: state.mode == AppMode::Artifacts,
         }
-        .render(layout[1], buf, &mut state.artifacts);
+        .render(artifacs_area, buf, &mut state.artifacts);
     }
 }
