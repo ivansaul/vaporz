@@ -1,13 +1,14 @@
+use crate::errors::Result;
+use crate::ui::metrics::Metrics;
 use crate::{
     actions::AppAction,
     events::AppEvent,
     tui::Tui,
     ui::{
         artifacts::{ArtifacsWidget, Artifacts},
-        counter::{Counter, CounterWidget},
+        counter::Counter,
     },
 };
-use color_eyre::eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
@@ -65,26 +66,20 @@ impl App {
             KeyCode::Esc | KeyCode::Char('q') => Some(AppAction::Quit),
             KeyCode::Char('1') => Some(AppAction::SwitchMode(AppMode::Counter)),
             KeyCode::Char('2') => Some(AppAction::SwitchMode(AppMode::Artifacts)),
-            KeyCode::Up => Some(AppAction::KeyUp),
-            KeyCode::Down => Some(AppAction::KeyDown),
-            KeyCode::Enter => Some(AppAction::KeyEnter),
-            KeyCode::Char('m') => Some(AppAction::KeyCharLowerM),
-            KeyCode::Char('p') => Some(AppAction::KeyCharLowerP),
-            KeyCode::Char('s') => Some(AppAction::KeyCharLowerS),
-            _ => None,
+            _ => match self.mode {
+                AppMode::Counter => None,
+                AppMode::Artifacts => self.artifacts.handle_key_event(kev),
+            },
         }
     }
 
-    fn handle_action(&mut self, action: AppAction) -> Option<AppAction> {
+    fn handle_action(&mut self, action: AppAction) -> Result<Option<AppAction>> {
         match action {
-            AppAction::Quit => self.quit(),
-            AppAction::SwitchMode(mode) => self.switch_mode(mode),
-            AppAction::ArtifactNewRow(_)
-            | AppAction::ArtifactUpdateRowRemoveStatus { id: _, removed: _ } => {
-                self.artifacts.perform(action)
-            }
+            AppAction::Quit => Ok(self.quit()),
+            AppAction::SwitchMode(mode) => Ok(self.switch_mode(mode)),
+            AppAction::ArtifactsInsertRow(_) => self.artifacts.perform(action),
             _ => match self.mode {
-                AppMode::Counter => self.counter_1.perform(action),
+                AppMode::Counter => Ok(self.counter_1.perform(action)),
                 AppMode::Artifacts => self.artifacts.perform(action),
             },
         }
@@ -115,7 +110,7 @@ impl App {
                                 tui.draw(|f| self.render(f))?;
                                 None
                             }
-                            other => self.handle_action(other),
+                            other => self.handle_action(other)?,
                         };
                     }
                 }
@@ -128,7 +123,7 @@ impl App {
                                 tui.draw(|f| self.render(f))?;
                                 None
                             }
-                            other => self.handle_action(other),
+                            other => self.handle_action(other)?,
                         };
                     }
                 }
@@ -158,19 +153,25 @@ impl StatefulWidget for AppWidget {
         let background = Block::default().style(Style::default().bg(Color::Rgb(0, 0, 0)));
         background.render(area, buf);
 
-        let layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(10), Constraint::Percentage(90)])
-            .split(area);
+        let [left_area, artifacs_area] = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Min(30), Constraint::Percentage(100)])
+            .areas(area);
 
-        CounterWidget {
-            has_focus: state.mode == AppMode::Counter,
+        let [metrics_area, _] = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Min(4), Constraint::Percentage(100)])
+            .areas(left_area);
+
+        Metrics {
+            releasable_space: state.artifacts.releasable_space().unwrap_or(0),
+            saved_space: state.artifacts.saved_space().unwrap_or(0),
         }
-        .render(layout[0], buf, &mut state.counter_1);
+        .render(metrics_area, buf);
 
         ArtifacsWidget {
             has_focus: state.mode == AppMode::Artifacts,
         }
-        .render(layout[1], buf, &mut state.artifacts);
+        .render(artifacs_area, buf, &mut state.artifacts);
     }
 }

@@ -9,18 +9,19 @@ use std::{
 use uuid::Uuid;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
-pub enum Removed {
+pub enum ProcessStatus {
     #[default]
-    False,
-    True,
-    Progress,
+    Pending,
+    Completed,
+    InProgress,
+    Failed,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FolderInfo {
     pub id: Uuid,
     pub path: PathBuf,
-    pub removed: Removed,
+    pub removal_status: ProcessStatus,
     size: Arc<OnceLock<u64>>,
     last_modified: Arc<OnceLock<u64>>,
 }
@@ -32,7 +33,7 @@ impl FolderInfo {
             path: path,
             size: Arc::new(OnceLock::new()),
             last_modified: Arc::new(OnceLock::new()),
-            removed: Removed::default(),
+            removal_status: ProcessStatus::default(),
         };
         info.bg();
         info
@@ -47,7 +48,7 @@ impl FolderInfo {
     }
 
     pub fn last_modified(&self) -> Option<u64> {
-        last_modified(self.path.clone())
+        self.last_modified.get().copied()
     }
 
     fn bg(&self) {
