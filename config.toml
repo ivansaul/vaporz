@@ -1,0 +1,14 @@
+[[targets]]
+name = "Rust"
+markers = ["Cargo.toml"]
+artifacts = ["target"]
+
+[[targets]]
+name = "Python"
+markers = ["pyproject.toml", "requirements.txt", "ext:py"]
+artifacts = [".venv", "__pycache__", "dist"]
+
+[[targets]]
+name = "Node"
+markers = ["package.json"]
+artifacts = ["node_modules"]

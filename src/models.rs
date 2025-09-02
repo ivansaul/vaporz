@@ -2,6 +2,7 @@ use crate::utils::{
     fs::{calculate_dir_size, last_modified},
     humanize,
 };
+use serde::Deserialize;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -76,7 +77,7 @@ impl FolderInfo {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TargetInfo {
     pub name: String,
     pub markers: Vec<String>,

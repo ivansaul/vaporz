@@ -1,3 +1,4 @@
+use crate::config;
 use crate::models::{FolderInfo, TargetInfo};
 use std::path::Path;
 use tokio::sync::mpsc::UnboundedSender;
@@ -59,29 +60,8 @@ pub fn scan_current_dir(tx: UnboundedSender<FolderInfo>) {
 }
 
 fn get_targets() -> Vec<TargetInfo> {
-    vec![
-        TargetInfo {
-            name: String::from("Rust"),
-            markers: vec![String::from("Cargo.toml")],
-            artifacts: vec![String::from("target")],
-        },
-        TargetInfo {
-            name: String::from("Python"),
-            markers: vec![
-                String::from("pyproject.toml"),
-                String::from("requirements.txt"),
-                String::from("ext:py"),
-            ],
-            artifacts: vec![
-                String::from(".venv"),
-                String::from("__pycache__"),
-                String::from("dist"),
-            ],
-        },
-        TargetInfo {
-            name: String::from("Node"),
-            markers: vec![String::from("package.json")],
-            artifacts: vec![String::from("node_modules"), String::from("dist")],
-        },
-    ]
+    if let Ok(config) = config::load_config() {
+        return config.targets;
+    }
+    Vec::new()
 }
