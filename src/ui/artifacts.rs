@@ -224,7 +224,6 @@ impl StatefulWidget for ArtifacsWidget {
         let block = Block::bordered()
             .border_style(Style::new().fg(block_border_color))
             .border_type(BorderType::Rounded)
-            .title(" artifacts ".white().bold())
             .title_bottom(" ↑ Select ↓ ".blue().bold())
             .title_bottom(" Delete ↵ ".red().bold());
 
