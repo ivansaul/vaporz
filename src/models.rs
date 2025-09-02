@@ -3,7 +3,8 @@ use crate::utils::{
     humanize,
 };
 use std::{
-    path::PathBuf,
+    fs,
+    path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
 use uuid::Uuid;
@@ -72,5 +73,28 @@ impl FolderInfo {
 
     pub fn human_last_modified(&self) -> Option<String> {
         Some(humanize::format_last_modified(self.last_modified()?))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TargetInfo {
+    pub name: String,
+    pub markers: Vec<String>,
+    pub artifacts: Vec<String>,
+}
+
+impl TargetInfo {
+    pub fn is_project_root(&self, dir: &Path) -> bool {
+        self.markers.iter().any(|marker| {
+            if let Some(suffix) = marker.strip_prefix("ext:") {
+                fs::read_dir(dir)
+                    .ok()
+                    .into_iter()
+                    .flat_map(|it| it.filter_map(Result::ok))
+                    .any(|entry| entry.path().extension().map_or(false, |ext| ext == suffix))
+            } else {
+                dir.join(marker).exists()
+            }
+        })
     }
 }
