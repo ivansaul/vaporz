@@ -13,7 +13,14 @@ pub fn find_target_dirs<P: AsRef<Path>>(
     while let Some(Ok(entry)) = walker.next() {
         let path = entry.path();
 
-        if !entry.file_type().is_dir() {
+        if !entry.file_type().is_dir() || entry.path_is_symlink() {
+            continue;
+        }
+
+        if let Some(name) = path.file_name().and_then(|n| n.to_str())
+            && name.starts_with('.')
+        {
+            walker.skip_current_dir();
             continue;
         }
 
