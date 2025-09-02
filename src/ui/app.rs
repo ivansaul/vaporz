@@ -153,15 +153,10 @@ impl StatefulWidget for AppWidget {
         let background = Block::default().style(Style::default().bg(Color::Rgb(0, 0, 0)));
         background.render(area, buf);
 
-        let [left_area, artifacs_area] = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Min(30), Constraint::Percentage(100)])
-            .areas(area);
-
-        let [metrics_area, _] = Layout::default()
+        let [metrics_area, artifacs_area] = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![Constraint::Min(4), Constraint::Percentage(100)])
-            .areas(left_area);
+            .areas(area);
 
         MetricsWidget {
             releasable_space: state.artifacts.releasable_space().unwrap_or(0),
