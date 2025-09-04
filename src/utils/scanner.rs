@@ -40,12 +40,12 @@ fn find_artifacts_in_project(
     let mut subwalker = WalkDir::new(project_root).into_iter();
 
     while let Some(Ok(entry)) = subwalker.next() {
-        if let Some(name) = entry.file_name().to_str() {
-            if target.artifacts.iter().any(|artifact| artifact == name) {
-                let info = FolderInfo::new(entry.path().to_path_buf());
-                let _ = tx.send(info);
-                subwalker.skip_current_dir();
-            }
+        if let Some(name) = entry.file_name().to_str()
+            && target.artifacts.iter().any(|artifact| artifact == name)
+        {
+            let info = FolderInfo::new(entry.path().to_path_buf());
+            let _ = tx.send(info);
+            subwalker.skip_current_dir();
         }
     }
 
@@ -55,7 +55,7 @@ fn find_artifacts_in_project(
 pub fn scan_current_dir(tx: UnboundedSender<FolderInfo>) {
     if let Ok(root) = std::env::current_dir() {
         let targets = get_targets();
-        find_target_dirs(&root, targets, tx);
+        find_target_dirs(root, targets, tx);
     }
 }
 

@@ -8,7 +8,7 @@ async fn main() -> Result<()> {
     let tui = Tui::new()?
         .tick_rate(1.0) // 4 ticks per second
         .frame_rate(2.0); // 30 frames per second
-    let mut app = App::new();
+    let mut app = App::default();
     let result = app.run(tui).await;
     result?;
     Ok(())

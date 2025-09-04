@@ -32,7 +32,7 @@ impl FolderInfo {
     pub fn new(path: PathBuf) -> Self {
         let info = Self {
             id: Uuid::new_v4(),
-            path: path,
+            path,
             size: Arc::new(OnceLock::new()),
             last_modified: Arc::new(OnceLock::new()),
             removal_status: ProcessStatus::default(),
@@ -92,7 +92,7 @@ impl TargetInfo {
                     .ok()
                     .into_iter()
                     .flat_map(|it| it.filter_map(Result::ok))
-                    .any(|entry| entry.path().extension().map_or(false, |ext| ext == suffix))
+                    .any(|entry| entry.path().extension().is_some_and(|ext| ext == suffix))
             } else {
                 dir.join(marker).exists()
             }

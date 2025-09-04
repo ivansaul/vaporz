@@ -29,14 +29,20 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    fn new() -> Self {
         let (action_tx, action_rx) = mpsc::unbounded_channel();
         Self {
             mode: AppMode::default(),
             artifacts: Artifacts::new(action_tx.clone()),
             should_quit: false,
-            action_rx: action_rx,
+            action_rx,
         }
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

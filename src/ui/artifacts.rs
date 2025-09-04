@@ -32,7 +32,7 @@ impl Artifacts {
         Self {
             rows: Arc::new(RwLock::new(Vec::new())),
             table_state: TableState::new(),
-            action_tx: action_tx,
+            action_tx,
             path_order_descending: Default::default(),
             last_modified_order_descending: Default::default(),
             size_order_descending: Default::default(),
@@ -166,10 +166,10 @@ impl Artifacts {
         id: Uuid,
         new_status: ProcessStatus,
     ) {
-        if let Ok(mut data) = rows.write() {
-            if let Some(row) = data.iter_mut().find(|r| r.id == id) {
-                row.removal_status = new_status;
-            }
+        if let Ok(mut data) = rows.write()
+            && let Some(row) = data.iter_mut().find(|r| r.id == id)
+        {
+            row.removal_status = new_status;
         }
     }
 
@@ -190,10 +190,7 @@ impl Artifacts {
 impl Artifacts {
     pub fn releasable_space(&self) -> Result<u64> {
         let rows = self.rows.read()?;
-        let size = rows
-            .iter()
-            .filter_map(|row| row.size())
-            .fold(0, |acc, x| acc + x);
+        let size = rows.iter().filter_map(|row| row.size()).sum::<u64>();
         Ok(size)
     }
 
@@ -203,7 +200,7 @@ impl Artifacts {
             .iter()
             .filter(|row| row.removal_status == ProcessStatus::Completed)
             .filter_map(|row| row.size())
-            .fold(0, |acc, x| acc + x);
+            .sum::<u64>();
         Ok(size)
     }
 }
@@ -270,13 +267,13 @@ impl StatefulWidget for ArtifacsWidget {
                         Some(size) => Line::from(size)
                             .alignment(Alignment::Right)
                             .fg(Color::LightGreen),
-                        None => LoadingLine::default().alignment(Alignment::Right),
+                        None => LoadingLine::colored_dots().alignment(Alignment::Right),
                     };
                     let line_mod = match folder.human_last_modified() {
                         Some(elapsed) => Line::from(elapsed)
                             .alignment(Alignment::Right)
                             .fg(Color::LightGreen),
-                        None => LoadingLine::default().alignment(Alignment::Right),
+                        None => LoadingLine::colored_dots().alignment(Alignment::Right),
                     };
                     Row::new(vec![
                         Cell::from(line_path),
