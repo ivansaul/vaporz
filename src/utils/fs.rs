@@ -41,7 +41,7 @@ pub fn calculate_dir_size<P: AsRef<Path>>(dir: P) -> u64 {
     use walkdir::WalkDir;
     WalkDir::new(dir)
         .into_iter()
-        .filter_map(Result::ok)
+        .filter_map(|res| res.ok())
         .filter(|entry| !entry.path_is_symlink())
         .filter(|entry| entry.file_type().is_file())
         .par_bridge()
