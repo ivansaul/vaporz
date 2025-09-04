@@ -4,10 +4,7 @@ use crate::{
     actions::AppAction,
     events::AppEvent,
     tui::Tui,
-    ui::{
-        artifacts::{ArtifacsWidget, Artifacts},
-        counter::Counter,
-    },
+    ui::artifacts::{ArtifacsWidget, Artifacts},
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
@@ -20,14 +17,12 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Copy)]
 pub enum AppMode {
-    Counter,
     #[default]
     Artifacts,
 }
 
 pub struct App {
     pub mode: AppMode,
-    pub counter_1: Counter,
     pub artifacts: Artifacts,
     should_quit: bool,
     action_rx: UnboundedReceiver<AppAction>,
@@ -38,7 +33,6 @@ impl App {
         let (action_tx, action_rx) = mpsc::unbounded_channel();
         Self {
             mode: AppMode::default(),
-            counter_1: Counter { count: 0 },
             artifacts: Artifacts::new(action_tx.clone()),
             should_quit: false,
             action_rx: action_rx,
@@ -64,10 +58,8 @@ impl App {
     fn handle_key_event(&mut self, kev: KeyEvent) -> Option<AppAction> {
         match kev.code {
             KeyCode::Esc | KeyCode::Char('q') => Some(AppAction::Quit),
-            KeyCode::Char('1') => Some(AppAction::SwitchMode(AppMode::Counter)),
-            KeyCode::Char('2') => Some(AppAction::SwitchMode(AppMode::Artifacts)),
+            KeyCode::Char('1') => Some(AppAction::SwitchMode(AppMode::Artifacts)),
             _ => match self.mode {
-                AppMode::Counter => None,
                 AppMode::Artifacts => self.artifacts.handle_key_event(kev),
             },
         }
@@ -79,7 +71,6 @@ impl App {
             AppAction::SwitchMode(mode) => Ok(self.switch_mode(mode)),
             AppAction::ArtifactsInsertRow(_) => self.artifacts.perform(action),
             _ => match self.mode {
-                AppMode::Counter => Ok(self.counter_1.perform(action)),
                 AppMode::Artifacts => self.artifacts.perform(action),
             },
         }
