@@ -1,3 +1,25 @@
+## [1.0.0-beta.2](https://github.com/ivansaul/vaporz/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2025-09-05)
+
+### Fix
+
+* **win:** move symlink filter before par_bridge ([6e2fc3d](https://github.com/ivansaul/vaporz/commit/6e2fc3df3f5014c08637ff5273f748e99fb411ce))
+* **win:** use explicit closure in filter_map to fix type mismatch ([67e2721](https://github.com/ivansaul/vaporz/commit/67e27218543424ee8d1c90236bff249b77cac0c3))
+
+### Chore
+
+* add more targets and artifacts to config.toml ([ac1174a](https://github.com/ivansaul/vaporz/commit/ac1174ac4e4ab70b8fa80307ddf2712eb2a916f3))
+* **ci:** test on multiple OSes ([e00a566](https://github.com/ivansaul/vaporz/commit/e00a566f6d3a3a5ba95a8e94bf4c6cdaf4f86409))
+
+### Docs
+
+* add README file ([03bcae8](https://github.com/ivansaul/vaporz/commit/03bcae88088665307bfb484b16062ec23a807389))
+* update demo URL ([4e8ed89](https://github.com/ivansaul/vaporz/commit/4e8ed8931b0cd980a47ef9f4f256d1f9616af9ba))
+
+### Refactor
+
+* **counter:** remove temporary counter feature ([82ef68f](https://github.com/ivansaul/vaporz/commit/82ef68f664a6c22961176a678156891e36237303))
+* fix clippy warnings across all targets and features ([28e1c1f](https://github.com/ivansaul/vaporz/commit/28e1c1f2e644bb24ccd7f34747416ff94e7027de))
+
 ## 1.0.0-beta.1 (2025-09-04)
 
 ### Feature
