@@ -40,6 +40,25 @@ Clean up `node_modules`, `target`, `build`, `.venv`, and more — free space in 
 
 ## Installation
 
+## One-Line Installers
+
+### Linux & macOS
+
+```bash
+curl -sSL instl.vercel.app/ivansaul/vaporz | sh
+```
+
+### Windows (PowerShell)
+
+```console
+powershell -c "irm https://instl.vercel.app/ivansaul/vaporz?platform=windows|iex"
+```
+
+> [!TIP]
+> If the program does nothing or shows an error about `VCRUNTIME140.dll` or `MSVCP140.dll`, it means the required Microsoft Visual C++ runtime is missing on your system. You can fix this by installing the [Visual C++ Redistributable](https://learn.microsoft.com/en-us/answers/questions/4269238/vcruntime140-dll-and-msvcp140-dll-missing-in-windo).
+
+## Manual Install
+
 Prebuilt binaries are available for **Linux**, **macOS**, and **Windows** on the [Releases](https://github.com/ivansaul/vaporz/releases) page.
 
 1. Download the latest release for your platform.
