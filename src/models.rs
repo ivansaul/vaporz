@@ -2,8 +2,10 @@ use crate::utils::{
     fs::{calculate_dir_size, last_modified},
     humanize,
 };
+use serde::Deserialize;
 use std::{
-    path::PathBuf,
+    fs,
+    path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
 use uuid::Uuid;
@@ -30,7 +32,7 @@ impl FolderInfo {
     pub fn new(path: PathBuf) -> Self {
         let info = Self {
             id: Uuid::new_v4(),
-            path: path,
+            path,
             size: Arc::new(OnceLock::new()),
             last_modified: Arc::new(OnceLock::new()),
             removal_status: ProcessStatus::default(),
@@ -72,5 +74,28 @@ impl FolderInfo {
 
     pub fn human_last_modified(&self) -> Option<String> {
         Some(humanize::format_last_modified(self.last_modified()?))
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct TargetInfo {
+    pub name: String,
+    pub markers: Vec<String>,
+    pub artifacts: Vec<String>,
+}
+
+impl TargetInfo {
+    pub fn is_project_root(&self, dir: &Path) -> bool {
+        self.markers.iter().any(|marker| {
+            if let Some(suffix) = marker.strip_prefix("ext:") {
+                fs::read_dir(dir)
+                    .ok()
+                    .into_iter()
+                    .flat_map(|it| it.filter_map(Result::ok))
+                    .any(|entry| entry.path().extension().is_some_and(|ext| ext == suffix))
+            } else {
+                dir.join(marker).exists()
+            }
+        })
     }
 }

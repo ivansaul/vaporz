@@ -1,0 +1,119 @@
+[[targets]]
+name = "Rust"
+markers = ["Cargo.toml"]
+artifacts = ["target", ".xwin-cache"]
+
+[[targets]]
+name = "Python"
+markers = ["pyproject.toml", "requirements.txt", "ext:py"]
+artifacts = [
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+]
+
+[[targets]]
+name = "Node"
+markers = ["package.json", "turbo.json"]
+artifacts = ["node_modules", ".angular", ".turbo"]
+
+[[targets]]
+name = "Swift"
+markers = ["Package.swift"]
+artifacts = [".build", ".swiftpm", "DerivedData"]
+
+[[targets]]
+name = "Dart / Flutter"
+markers = ["pubspec.yaml"]
+artifacts = ["build", ".dart_tool"]
+
+[[targets]]
+name = "Kotlin"
+markers = ["build.gradle.kts", "settings.gradle.kts", "ext:kt"]
+artifacts = ["build", ".gradle"]
+
+[[targets]]
+name = "Zig"
+markers = ["build.zig"]
+artifacts = ["zig-cache", ".zig-cache", "zig-out"]
+
+[[targets]]
+name = "PHP"
+markers = ["composer.json"]
+artifacts = ["vendor"]
+
+[[targets]]
+name = "Go"
+markers = ["go.mod", "go.work"]
+artifacts = ["bin", "build", "dist", "coverage"]
+
+[[targets]]
+name = ".NET"
+markers = ["ext:csproj", "ext:fsproj", "ext:sln"]
+artifacts = ["bin", "obj"]
+
+[[targets]]
+name = "Unity"
+markers = ["Assembly-CSharp.csproj"]
+artifacts = ["Library", "Temp", "Obj", "Logs", "MemoryCaptures", "Build", "Builds"]
+
+[[targets]]
+name = "Unreal"
+markers = ["ext:uproject"]
+artifacts = ["Binaries", "Build", "Saved", "DerivedDataCache", "Intermediate"]
+
+[[targets]]
+name = "Scala (SBT)"
+markers = ["build.sbt"]
+artifacts = ["target", "project/target"]
+
+[[targets]]
+name = "Elixir"
+markers = ["mix.exs"]
+artifacts = ["_build", ".elixir-tools", ".elixir_ls", ".lexical"]
+
+[[targets]]
+name = "Java (Maven)"
+markers = ["pom.xml"]
+artifacts = ["target"]
+
+[[targets]]
+name = "CMake"
+markers = ["CMakeLists.txt", "Makefile"]
+artifacts = ["build", "cmake-build-debug", "cmake-build-release"]
+
+[[targets]]
+name = "Godot 4"
+markers = ["project.godot"]
+artifacts = [".godot"]
+
+[[targets]]
+name = "Jupyter"
+markers = ["ext:ipynb"]
+artifacts = [".ipynb_checkpoints"]
+
+[[targets]]
+name = "Gradle"
+markers = ["build.gradle", "build.gradle.kts"]
+artifacts = ["build", ".gradle"]
+
+[[targets]]
+name = "Ruby"
+markers = ["Gemfile"]
+artifacts = ["vendor/bundle", ".bundle"]
+
+[[targets]]
+name = "R"
+markers = ["DESCRIPTION", "NAMESPACE"]
+artifacts = [".Rhistory", ".RData", ".Rproj.user", "packrat", "renv"]
+
+[[targets]]
+name = "Haskell (Stack)"
+markers = ["stack.yaml"]
+artifacts = [".stack-work"]
+
+[[targets]]
+name = "Haskell (Cabal)"
+markers = ["cabal.project"]
+artifacts = ["dist-newstyle"]

@@ -1,12 +1,12 @@
 use crate::utils::humanize::format_size;
 use ratatui::{prelude::*, widgets::*};
 
-pub struct Metrics {
+pub struct MetricsWidget {
     pub releasable_space: u64,
     pub saved_space: u64,
 }
 
-impl Widget for Metrics {
+impl Widget for MetricsWidget {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
         Self: Sized,
