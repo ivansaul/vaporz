@@ -6,7 +6,7 @@ use ratatui::{
 pub struct LoadingLine;
 
 impl LoadingLine {
-    pub fn default() -> Line<'static> {
+    pub fn colored_dots() -> Line<'static> {
         Line::from(vec![
             Span::styled("‧", Style::default().fg(Color::LightGreen)).bold(),
             Span::styled("‧", Style::default().fg(Color::Green)).bold(),
