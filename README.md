@@ -28,7 +28,7 @@ Clean up `node_modules`, `target`, `build`, `.venv`, and more — free space in 
 
 ---
 
-![demo](https://github.com/ivansaul/demos/raw/refs/heads/master/videos/vaporz.avif)
+![demo](https://github.com/user-attachments/assets/7d294e58-ca1a-460c-8fc2-855b97848507)
 
 ## Features ✨
 
