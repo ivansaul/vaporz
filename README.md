@@ -1,8 +1,11 @@
 <div align="center">
 
-<h1 style="border-bottom: none">
-    <b><a href="#">vaporz</a></b>
-</h1>
+<div align="center">
+    <img width="300" src="https://imgur.com/R6Nnj7T.png" alt="vaporz Logo">
+</div>
+<div align="center">
+    <img width="300" src="https://imgur.com/x1l1olc.png" alt="vaporz Logo">
+</div>
 
 Easily find and remove old and heavy build artifacts ✨
 

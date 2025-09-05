@@ -11,16 +11,12 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci.yml
-
   semantic_release:
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.semantic.outputs.new_release_git_tag }}
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN}}
-    needs: [ci]
 
     steps:
       - name: Checkout
